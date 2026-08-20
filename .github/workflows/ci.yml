@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - main
-  # Trigger on PRs (including forks)
-  pull_request_target:
+  # Trigger on PRs (no forks)
+  pull_request:
     branches:
       - main
   # Manual trigger
@@ -16,58 +16,56 @@ on:
         required: false
         default: ''
 
+permissions:
+  contents: read
+
 jobs:
   test-go:
     runs-on: ubuntu-latest
-    # This gates the job until a maintainer approves
-    environment: CI
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          # Use the PR head for pull_request_target, otherwise the default ref
-          ref: ${{ github.event.pull_request.head.sha || github.event.inputs.ref || github.ref }}
+          ref: ${{ github.event.inputs.ref || '' }}
           # Persist credentials is false to prevent the PR code from using the GITHUB_TOKEN
           persist-credentials: false
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
         with:
           go-version: '1.22'
       - name: Run Go tests
         working-directory: ./go
         env:
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-        run: go test ./...
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: go test -timeout 20m ./...
 
   test-java:
     runs-on: ubuntu-latest
-    environment: CI
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.event.inputs.ref || github.ref }}
+          ref: ${{ github.event.inputs.ref || '' }}
           persist-credentials: false
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+      - name: Set up JDK 24
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
         with:
-          java-version: '21'
+          java-version: '24'
           distribution: 'temurin'
           cache: maven
       - name: Run Java tests
         working-directory: ./java
         env:
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: mvn -B test
 
   test-javascript:
     runs-on: ubuntu-latest
-    environment: CI
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.event.inputs.ref || github.ref }}
+          ref: ${{ github.event.inputs.ref || '' }}
           persist-credentials: false
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
           node-version: '20'
           cache: 'npm'
@@ -78,19 +76,18 @@ jobs:
       - name: Run JavaScript tests
         working-directory: ./javascript
         env:
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: node --test *.test.js
 
   test-python:
     runs-on: ubuntu-latest
-    environment: CI
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.event.inputs.ref || github.ref }}
+          ref: ${{ github.event.inputs.ref || '' }}
           persist-credentials: false
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
           python-version: '3.11'
       - name: Install dependencies
@@ -99,5 +96,6 @@ jobs:
       - name: Run Python tests
         working-directory: ./python
         env:
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-        run: pytest .
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        # Discover and run all .py files as tests
+        run: python -m unittest discover -p "*.py"
