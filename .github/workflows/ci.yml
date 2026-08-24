@@ -22,6 +22,7 @@ permissions:
 jobs:
   test-go:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -32,14 +33,20 @@ jobs:
         uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
         with:
           go-version: '1.22'
+      - name: Start Flex Tier Proxy
+        run: |
+          python3 .github/scripts/proxy.py 8080 &
+          sleep 1
       - name: Run Go tests
         working-directory: ./go
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: go test -timeout 20m ./...
+          GOOGLE_GEMINI_BASE_URL: http://127.0.0.1:8080
+        run: go test -timeout 10m ./...
 
   test-java:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -51,14 +58,20 @@ jobs:
           java-version: '24'
           distribution: 'temurin'
           cache: maven
+      - name: Start Flex Tier Proxy
+        run: |
+          python3 .github/scripts/proxy.py 8080 &
+          sleep 1
       - name: Run Java tests
         working-directory: ./java
         env:
           GOOGLE_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_GEMINI_BASE_URL: http://127.0.0.1:8080
         run: mvn -B test
 
   test-javascript:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -73,14 +86,20 @@ jobs:
       - name: Install dependencies
         working-directory: ./javascript
         run: npm ci
+      - name: Start Flex Tier Proxy
+        run: |
+          python3 .github/scripts/proxy.py 8080 &
+          sleep 1
       - name: Run JavaScript tests
         working-directory: ./javascript
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: node --test *.test.js
+          GOOGLE_GEMINI_BASE_URL: http://127.0.0.1:8080
+        run: node --test --test-timeout=600000 *.test.js
 
   test-python:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -93,9 +112,14 @@ jobs:
       - name: Install dependencies
         working-directory: ./python
         run: pip install absl-py google-genai Pillow pyink pytest
+      - name: Start Flex Tier Proxy
+        run: |
+          python3 .github/scripts/proxy.py 8080 &
+          sleep 1
       - name: Run Python tests
         working-directory: ./python
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_GEMINI_BASE_URL: http://127.0.0.1:8080
         # Discover and run all .py files as tests
         run: python -m unittest discover -p "*.py"

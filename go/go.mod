@@ -4,7 +4,7 @@ go 1.24.0
 
 toolchain go1.24.1
 
-require google.golang.org/genai v1.1.0
+require google.golang.org/genai v1.69.0
 
 require (
 	cloud.google.com/go v0.116.0 // indirect
