@@ -39,7 +39,7 @@ public class SystemInstruction {
 
         GenerateContentResponse response =
                 client.models.generateContent(
-                        "gemini-3.7-flash",
+                        "gemini-3.8-flash",
                         "Good morning! How are you?",
                         config);
 
