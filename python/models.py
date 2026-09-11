@@ -48,3 +48,52 @@ class UnitTests(absltest.TestCase):
 
 if __name__ == "__main__":
     absltest.main()
+# Installation:
+# pip install google-genai
+
+import os
+from google import genai
+from google.genai import types
+
+# 2. Initialize the GenAI Client (reads GEMINI_API_KEY from environment)
+client = genai.Client()
+
+# 3. Build GenerateContentConfig
+config = types.GenerateContentConfig(
+    temperature=1.30,
+    top_p=0.98,
+    top_k=60,
+    candidate_count=1,
+    max_output_tokens=2500,
+    presence_penalty=0.60,
+    frequency_penalty=0.40,
+    system_instruction="You are an inventive speculative fiction author. Explore vivid metaphors and original concepts.",
+    safety_settings=[
+        types.SafetySetting(
+            category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+            threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        ),
+        types.SafetySetting(
+            category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+            threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        ),
+        types.SafetySetting(
+            category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+            threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        ),
+        types.SafetySetting(
+            category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+            threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        ),
+    ],
+)
+
+# 4. Generate Content
+response = client.models.generate_content(
+    model="gemini-2.5-flash",
+    contents="Generate 5 unexpected sci-fi novel premises involving time distortion and acoustic archaeology.",
+    config=config,
+)
+
+print("=== Raw Generated Output ===")
+print(response.text)
